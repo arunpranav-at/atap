@@ -10,7 +10,7 @@ import zipfile
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QApplication,
                             QPushButton, QLabel, QSlider, QScrollArea, QColorDialog, 
                             QFileDialog, QInputDialog, QMessageBox, QSpinBox, QToolBar,
-                            QAction, QSizePolicy, QDockWidget, QListWidget, QFrame)
+                            QAction, QSizePolicy, QDockWidget, QListWidget, QFrame, QListWidgetItem)
 from PyQt5.QtGui import QPixmap, QImage, QColor, QIcon
 from PyQt5.QtCore import Qt, QRect
 
@@ -296,7 +296,10 @@ class MainWindow(QMainWindow):
             frame_paths = []
             for i, frame in enumerate(self.frame_manager.frames):
                 frame_path = os.path.join(temp_dir, f"frame_{i:04d}.png")
-                frame.save(frame_path)
+                # Convert to QPixmap and save
+                pixmap = QPixmap.fromImage(frame)
+                if not pixmap.save(frame_path, "PNG"):
+                    raise Exception(f"Failed to save frame {i} to {frame_path}")
                 frame_paths.append(os.path.basename(frame_path))
             
             # Create a project info dictionary
@@ -310,14 +313,12 @@ class MainWindow(QMainWindow):
                 }
             }
             
-            # Save as a zip file
-            with tempfile.NamedTemporaryFile(suffix='.json', delete=False) as f:
-                info_path = f.name
-                import json
+            # Save project info as JSON
+            info_path = os.path.join(temp_dir, "project_info.json")
+            with open(info_path, 'w') as f:
                 json.dump(project_info, f)
             
             # Create zip archive
-            import zipfile
             with zipfile.ZipFile(file_path, 'w') as zipf:
                 # Add project info file
                 zipf.write(info_path, arcname="project_info.json")
@@ -327,14 +328,16 @@ class MainWindow(QMainWindow):
                     frame_path = os.path.join(temp_dir, frame_name)
                     zipf.write(frame_path, arcname=frame_name)
             
-            # Clean up
-            os.unlink(info_path)
+            # Clean up temporary directory
             shutil.rmtree(temp_dir)
             
             QMessageBox.information(self, "Save Successful", "Project saved successfully.")
             
         except Exception as e:
             QMessageBox.critical(self, "Save Error", f"Error saving project: {str(e)}")
+            # Print the full traceback for debugging
+            import traceback
+            traceback.print_exc()
     
     def open_project(self):
         """Opens an existing animation project"""
@@ -348,14 +351,26 @@ class MainWindow(QMainWindow):
             # Create a temporary directory for extraction
             temp_dir = tempfile.mkdtemp()
             
+            # Verify file exists and is zip-like
+            if not os.path.exists(file_path):
+                raise Exception(f"File not found: {file_path}")
+                
             # Extract zip archive
             import zipfile
-            with zipfile.ZipFile(file_path, 'r') as zipf:
-                zipf.extractall(temp_dir)
+            try:
+                with zipfile.ZipFile(file_path, 'r') as zipf:
+                    zipf.extractall(temp_dir)
+            except zipfile.BadZipFile:
+                raise Exception(f"Invalid or corrupted project file: {file_path}")
             
+            # Verify project info exists
+            info_path = os.path.join(temp_dir, "project_info.json")
+            if not os.path.exists(info_path):
+                raise Exception("Project file is missing required information")
+                
             # Load project info
             import json
-            with open(os.path.join(temp_dir, "project_info.json"), 'r') as f:
+            with open(info_path, 'r') as f:
                 project_info = json.load(f)
             
             # Ask for confirmation before loading
@@ -374,10 +389,21 @@ class MainWindow(QMainWindow):
                 self.frame_manager.fps_spinner.setValue(self.frame_manager.fps)
                 
                 # Load frames
+                frame_count = 0
                 for frame_name in project_info.get("frames", []):
                     frame_path = os.path.join(temp_dir, frame_name)
-                    frame = QImage(frame_path)
                     
+                    # Verify frame file exists
+                    if not os.path.exists(frame_path):
+                        print(f"Warning: Frame file not found: {frame_path}")
+                        continue
+                    
+                    # Load the image
+                    frame = QImage(frame_path)
+                    if frame.isNull():
+                        print(f"Warning: Could not load frame: {frame_path}")
+                        continue
+                        
                     # Add to our frames list
                     self.frame_manager.frames.append(frame)
                     
@@ -386,17 +412,27 @@ class MainWindow(QMainWindow):
                     item = QListWidgetItem(f"Frame {len(self.frame_manager.frames)}")
                     item.setIcon(QIcon(QPixmap.fromImage(thumbnail)))
                     self.frame_manager.frame_list.addItem(item)
+                    frame_count += 1
                 
                 # Select the first frame
                 if self.frame_manager.frames:
                     self.frame_manager.frame_list.setCurrentRow(0)
                     self.frame_manager.current_frame_index = 0
+                    self.canvas.load_image(self.frame_manager.frames[0])
                     self.frame_manager.frame_changed.emit(0)
                     
-                QMessageBox.information(self, "Open Successful", "Project loaded successfully.")
+                    QMessageBox.information(self, "Open Successful", 
+                                        f"Project loaded successfully with {frame_count} frames.")
+                else:
+                    QMessageBox.warning(self, "Open Warning", "No valid frames found in the project.")
             
             # Clean up
             shutil.rmtree(temp_dir)
             
         except Exception as e:
             QMessageBox.critical(self, "Open Error", f"Error opening project: {str(e)}")
+            # Print the full traceback for debugging
+            import traceback
+            traceback.print_exc()
+
+
