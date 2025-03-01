@@ -88,32 +88,40 @@ class MainWindow(QMainWindow):
     
     def create_tool_dock(self):
         """Creates the tools dock widget"""
-        dock = QDockWidget("Tools", self)
-        dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.tool_dock = QDockWidget("Tools", self)
+        self.tool_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.tool_dock.setFloating(False)  # Ensure it's docked initially
+
+        self.tool_dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
         
         tools_widget = QWidget()
         layout = QVBoxLayout(tools_widget)
-        
+
         # Brush tool button
         self.btn_brush = QPushButton("Pen")
         self.btn_brush.clicked.connect(lambda: self.canvas.set_tool("pen"))
         layout.addWidget(self.btn_brush)
-        
+
         # Eraser tool button
         self.btn_eraser = QPushButton("Eraser")
         self.btn_eraser.clicked.connect(lambda: self.canvas.set_tool("eraser"))
         layout.addWidget(self.btn_eraser)
-        
+
         # Fill tool button
         self.btn_fill = QPushButton("Fill")
         self.btn_fill.clicked.connect(lambda: self.canvas.set_tool("fill"))
         layout.addWidget(self.btn_fill)
         
+        # Gradient Fill button
+        self.btn_gradient = QPushButton("Gradient Fill")
+        self.btn_gradient.clicked.connect(lambda: self.canvas.set_tool("gradient"))
+        layout.addWidget(self.btn_gradient)
+
         # Clear canvas button
         self.btn_clear = QPushButton("Clear")
         self.btn_clear.clicked.connect(self.canvas.clear)
         layout.addWidget(self.btn_clear)
-        
+
         # Brush size slider
         layout.addWidget(QLabel("Brush Size:"))
         self.brush_slider = QSlider(Qt.Horizontal)
@@ -121,7 +129,7 @@ class MainWindow(QMainWindow):
         self.brush_slider.setValue(3)
         self.brush_slider.valueChanged.connect(self.canvas.set_brush_size)
         layout.addWidget(self.brush_slider)
-        
+
         # Eraser size slider
         layout.addWidget(QLabel("Eraser Size:"))
         self.eraser_slider = QSlider(Qt.Horizontal)
@@ -129,76 +137,186 @@ class MainWindow(QMainWindow):
         self.eraser_slider.setValue(10)
         self.eraser_slider.valueChanged.connect(lambda x: setattr(self.canvas, 'eraser_size', x))
         layout.addWidget(self.eraser_slider)
-        
+
         layout.addStretch()
-        dock.setWidget(tools_widget)
-        self.addDockWidget(Qt.LeftDockWidgetArea, dock)
-    
+        self.tool_dock.setWidget(tools_widget)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.tool_dock)
+
     def create_color_dock(self):
         """Creates the color selection dock widget"""
-        dock = QDockWidget("Colors", self)
-        dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.color_dock = QDockWidget("Colors", self)
+        self.color_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.color_dock.setFloating(False)
+
+        self.color_dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
         
         colors_widget = QWidget()
         layout = QVBoxLayout(colors_widget)
+
+        # 🎨 Color picker with preview in one line
+        color_picker_layout = QHBoxLayout()
         
-        # Color picker button
         self.btn_color = QPushButton("Select Color")
         self.btn_color.clicked.connect(self.open_color_dialog)
-        layout.addWidget(self.btn_color)
         
-        # Color preview
         self.color_preview = QFrame()
         self.color_preview.setFrameShape(QFrame.Box)
-        self.color_preview.setFixedSize(100, 50)
+        self.color_preview.setFixedSize(40, 20)  # Smaller preview
         self.color_preview.setStyleSheet("background-color: black;")
-        layout.addWidget(self.color_preview)
+
+        # Add button and preview to the same row
+        color_picker_layout.addWidget(self.btn_color)
+        color_picker_layout.addWidget(self.color_preview)
         
-        # Common colors palette
-        layout.addWidget(QLabel("Common Colors:"))
-        palette_layout = QHBoxLayout()
+        layout.addLayout(color_picker_layout)  # Add the row layout to main layout
+
+        self.color_dock.setWidget(colors_widget)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.color_dock)
+
+        # 🎨 Gradient color selection
+        layout.addWidget(QLabel("Gradient Colors:"))
+
+        # Start Color Selection with Preview
+        start_color_layout = QHBoxLayout()
+        self.btn_start_color = QPushButton("Start Color")
+        self.btn_start_color.clicked.connect(self.select_start_color)
+        self.start_color_preview = QFrame()
+        self.start_color_preview.setFrameShape(QFrame.Box)
+        self.start_color_preview.setFixedSize(40, 20)  # Small preview box
+        self.start_color_preview.setStyleSheet("background-color: red;")  # Default Red
+        start_color_layout.addWidget(self.btn_start_color)
+        start_color_layout.addWidget(self.start_color_preview)
+        layout.addLayout(start_color_layout)
+
+        # End Color Selection with Preview
+        end_color_layout = QHBoxLayout()
+        self.btn_end_color = QPushButton("End Color")
+        self.btn_end_color.clicked.connect(self.select_end_color)
+        self.end_color_preview = QFrame()
+        self.end_color_preview.setFrameShape(QFrame.Box)
+        self.end_color_preview.setFixedSize(40, 20)  # Small preview box
+        self.end_color_preview.setStyleSheet("background-color: blue;")  # Default Blue
+        end_color_layout.addWidget(self.btn_end_color)
+        end_color_layout.addWidget(self.end_color_preview)
+        layout.addLayout(end_color_layout)
         
-        common_colors = [
-            Qt.black, Qt.white, Qt.red, Qt.green, Qt.blue,
-            Qt.cyan, Qt.magenta, Qt.yellow, Qt.gray
-        ]
+        self.palette_layout = QHBoxLayout()
         
-        for color in common_colors:
+        self.custom_colors = []  # Store selected custom colors
+        self.update_custom_palette()
+
+        layout.addLayout(self.palette_layout)
+        layout.addStretch()
+
+        self.color_dock.setWidget(colors_widget)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.color_dock)
+
+    def select_start_color(self):
+        """Opens a color dialog for selecting the start color of the gradient"""
+        color = QColorDialog.getColor(self.canvas.gradient_start_color, self)
+        if color.isValid():
+            self.canvas.set_gradient_colors(color, self.canvas.gradient_end_color)
+
+    def select_end_color(self):
+        """Opens a color dialog for selecting the end color of the gradient"""
+        color = QColorDialog.getColor(self.canvas.gradient_end_color, self)
+        if color.isValid():
+            self.canvas.set_gradient_colors(self.canvas.gradient_start_color, color)
+
+
+    def open_color_dialog(self):
+        """Opens a color dialog and allows users to create custom colors"""
+        color = QColorDialog.getColor(self.canvas.brush_color, self)
+        if color.isValid():
+            self.set_brush_color(color)
+            self.add_color_to_palette(color)  # Add to custom palette
+
+    def add_color_to_palette(self, color):
+        """Adds a new color to the custom palette"""
+        if color not in self.custom_colors:
+            self.custom_colors.append(color)
+            self.update_custom_palette()
+
+    def update_custom_palette(self):
+        """Updates the color palette UI with saved colors"""
+        # Clear existing buttons
+        while self.palette_layout.count():
+            item = self.palette_layout.takeAt(0)
+            widget = item.widget()
+            if widget:
+                widget.deleteLater()
+
+        # Add color buttons
+        for color in self.custom_colors:
             color_btn = QPushButton()
             color_btn.setFixedSize(24, 24)
-            color_btn.setStyleSheet(f"background-color: {QColor(color).name()};")
-            color_btn.clicked.connect(lambda checked, c=color: self.set_brush_color(QColor(c)))
-            palette_layout.addWidget(color_btn)
-        
-        layout.addLayout(palette_layout)
-        layout.addStretch()
-        dock.setWidget(colors_widget)
-        self.addDockWidget(Qt.LeftDockWidgetArea, dock)
+            color_btn.setStyleSheet(f"background-color: {color.name()};")
+            color_btn.clicked.connect(lambda checked, c=color: self.set_brush_color(c))
+            self.palette_layout.addWidget(color_btn)
+
+    def toggle_tools_dock(self):
+        """Toggles the visibility of the Tools dock"""
+        if self.tool_dock.isVisible():
+            self.tool_dock.hide()
+            self.toggle_tools_action.setChecked(False)
+        else:
+            self.tool_dock.show()
+            self.toggle_tools_action.setChecked(True)
+
+    def toggle_colors_dock(self):
+        """Toggles the visibility of the Colors dock"""
+        if self.color_dock.isVisible():
+            self.color_dock.hide()
+            self.toggle_colors_action.setChecked(False)
+        else:
+            self.color_dock.show()
+            self.toggle_colors_action.setChecked(True)
     
     def create_toolbar(self):
         """Creates the main application toolbar"""
         toolbar = QToolBar("Main Toolbar", self)
         self.addToolBar(toolbar)
-        
+
         # File operations
         new_action = QAction("New Project", self)
         new_action.triggered.connect(self.new_project)
         toolbar.addAction(new_action)
-        
+
         save_action = QAction("Save Project", self)
         save_action.triggered.connect(self.save_project)
         toolbar.addAction(save_action)
-        
+
         load_action = QAction("Open Project", self)
         load_action.triggered.connect(self.open_project)
         toolbar.addAction(load_action)
         
+        resize_action = QAction("Resize Canvas", self)
+        resize_action.triggered.connect(self.resize_canvas_dialog)
+        toolbar.addAction(resize_action)
+
         toolbar.addSeparator()
-        
+
+        # Toggle tools dock
+        self.toggle_tools_action = QAction("Toggle Tools", self)
+        self.toggle_tools_action.setCheckable(True)
+        self.toggle_tools_action.setChecked(True)
+        self.toggle_tools_action.triggered.connect(self.toggle_tools_dock)
+        toolbar.addAction(self.toggle_tools_action)
+
+        # Toggle colors dock
+        self.toggle_colors_action = QAction("Toggle Colors", self)
+        self.toggle_colors_action.setCheckable(True)
+        self.toggle_colors_action.setChecked(True)
+        self.toggle_colors_action.triggered.connect(self.toggle_colors_dock)
+        toolbar.addAction(self.toggle_colors_action)
+
+        toolbar.addSeparator()
+
         # Animation operations
         export_action = QAction("Export Video", self)
         export_action.triggered.connect(self.export_animation)
         toolbar.addAction(export_action)
+
     
     def open_color_dialog(self):
         """Opens a color dialog and sets the selected color"""
@@ -209,8 +327,11 @@ class MainWindow(QMainWindow):
     def set_brush_color(self, color):
         """Sets the brush color and updates the color preview"""
         self.canvas.set_brush_color(color)
-        self.color_preview.setStyleSheet(f"background-color: {QColor(color).name()};")
-    
+        
+        # Ensure color_preview exists before using it
+        if hasattr(self, 'color_preview'):
+            self.color_preview.setStyleSheet(f"background-color: {QColor(color).name()};")
+
     def play_animation(self):
         """Starts the animation preview playback"""
         self.frame_manager.play_animation()
@@ -218,6 +339,14 @@ class MainWindow(QMainWindow):
     def stop_animation(self):
         """Stops the animation preview playback"""
         self.frame_manager.stop_animation()
+        
+    def resize_canvas_dialog(self):
+        """Opens a dialog to resize the canvas"""
+        width, ok_w = QInputDialog.getInt(self, "Canvas Width", "Enter new width:", self.canvas.width(), 100, 2000, 10)
+        height, ok_h = QInputDialog.getInt(self, "Canvas Height", "Enter new height:", self.canvas.height(), 100, 2000, 10)
+
+        if ok_w and ok_h:
+            self.canvas.resize_canvas(width, height)
     
     def export_animation(self):
         """Exports the animation as a video file"""
@@ -435,4 +564,20 @@ class MainWindow(QMainWindow):
             import traceback
             traceback.print_exc()
 
+    def closeEvent(self, event):
+        """Handles the window close event with a confirmation dialog."""
+        reply = QMessageBox.question(
+            self,
+            "Exit Confirmation",
+            "Do you want to save your animation project before closing? You will lose unsaved changes.",
+            QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+            QMessageBox.Cancel
+        )
 
+        if reply == QMessageBox.Save:
+            self.save_project()  # Calls the save function
+            event.accept()  # Close the application
+        elif reply == QMessageBox.Discard:
+            event.accept()  # Close without saving
+        else:
+            event.ignore()  # Cancel closing the application

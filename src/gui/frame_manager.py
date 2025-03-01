@@ -266,20 +266,26 @@ class FrameManager(QWidget):
     
     def play_animation(self):
         """Starts playing the animation preview"""
+        # Stop any existing animation before starting a new one
+        if hasattr(self, 'animation_timer') and self.animation_timer.isActive():
+            self.animation_timer.stop()
+
         # Save the current frame before starting playback
         if self.current_frame_index >= 0 and self.frames:
             current_image = self.parent.canvas.get_image()
             self.frames[self.current_frame_index] = current_image.copy()
-            
+
         self.animation_timer = QTimer(self)
         self.animation_timer.timeout.connect(self.advance_frame)
-        self.animation_timer.start(1000 // self.fps)
+        self.animation_timer.start(1000 // self.fps)  # Start the timer
+
         self.playback_index = 0
         self.old_index = self.current_frame_index
-        
+
         # Load the first frame for playback
         if self.frames:
             self.parent.canvas.load_image(self.frames[0].copy())
+
     
     def stop_animation(self):
         """Stops the animation preview"""
