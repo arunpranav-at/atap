@@ -8,10 +8,10 @@ import shutil
 import tempfile
 import zipfile
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QApplication,
-                            QPushButton, QLabel, QSlider, QScrollArea, QColorDialog, 
+                            QPushButton, QLabel, QSlider, QScrollArea, QColorDialog, QShortcut,
                             QFileDialog, QInputDialog, QMessageBox, QSpinBox, QToolBar,
                             QAction, QSizePolicy, QDockWidget, QListWidget, QFrame, QListWidgetItem)
-from PyQt5.QtGui import QPixmap, QImage, QColor, QIcon
+from PyQt5.QtGui import QPixmap, QImage, QColor, QIcon, QKeySequence
 from PyQt5.QtCore import Qt, QRect
 
 from src.gui.canvas import Canvas
@@ -293,6 +293,21 @@ class MainWindow(QMainWindow):
         resize_action = QAction("Resize Canvas", self)
         resize_action.triggered.connect(self.resize_canvas_dialog)
         toolbar.addAction(resize_action)
+        
+        undo_action = QAction("Undo", self)
+        undo_action.triggered.connect(self.canvas.undo)
+        toolbar.addAction(undo_action)
+
+        redo_action = QAction("Redo", self)
+        redo_action.triggered.connect(self.canvas.redo)
+        toolbar.addAction(redo_action)
+
+        # ✅ Add Keyboard Shortcuts
+        undo_shortcut = QShortcut(QKeySequence("Ctrl+Z"), self)
+        undo_shortcut.activated.connect(self.canvas.undo)
+
+        redo_shortcut = QShortcut(QKeySequence("Ctrl+Y"), self)
+        redo_shortcut.activated.connect(self.canvas.redo)
 
         toolbar.addSeparator()
 
