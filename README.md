@@ -120,7 +120,7 @@ Make sure you have the following installed on your system:
 
 6. **Run the application**:
    ```bash
-   python -m atap
+   python main.py
    ```
 
 ### 🔹 macOS
@@ -153,7 +153,7 @@ Make sure you have the following installed on your system:
 
 6. **Run the application**:
    ```bash
-   python -m atap
+   python main.py
    ```
 
 ### 🔹 Windows
@@ -183,7 +183,7 @@ Make sure you have the following installed on your system:
 
 6. **Run the application**:
    ```powershell
-   python -m atap
+   python main.py
    ```
 
 ## ❗ **Troubleshooting**
