@@ -36,16 +36,16 @@ A huge shoutout to the project [**zide**](https://github.com/bitspaceorg/zide) f
 
 # **Features**
 ### 🎨 **Simple Freehand Drawing**
-Kids can **draw, erase, and fill** their artwork with simple tools.  
+- Kids can **draw, erase, and fill** their artwork with simple tools.  
 
 ### 🎞️ **Frame-by-Frame Animation**
-Create animations by adding and managing multiple frames.  
+- Create animations by adding and managing multiple frames.  
 
 ### ✏️ **Adjustable Brush & Colors**
-Select different **brush sizes and colors** to enhance creativity.  
+- Select different **brush sizes and colors** to enhance creativity.  
 
 ### 🔄 **Undo & Redo**
-**Easily revert mistakes** with **Undo (Ctrl+Z)** and **Redo (Ctrl+Y)** functionality.  
+- **Easily revert mistakes** with **Undo (Ctrl+Z)** and **Redo (Ctrl+Y)** functionality.  
 
 ### 🎨 **Any Color Selection & Custom Palette**
 - Choose colors from **a full spectrum** 🎨  
@@ -56,16 +56,16 @@ Select different **brush sizes and colors** to enhance creativity.
 - Choose between **linear, radial, or conical gradients**.  
 
 ### 🖌️ **Various Brush Tools & Eraser**
-Use **pen, eraser, fill tool**, and **adjustable brush size** to customize the drawing experience.  
+- Use **pen, eraser, fill tool**, and **adjustable brush size** to customize the drawing experience.  
 
 ### 🎥 **Play & Preview Animation**
-**Watch animations come to life** instantly using the built-in preview option.  
+- **Watch animations come to life** instantly using the built-in preview option.  
 
 ### 🎬 **Set FPS (Frames Per Second)**
-Control the **speed of animations** with adjustable **FPS settings**.  
+- Control the **speed of animations** with adjustable **FPS settings**.  
 
 ### 🔄 **Toggle UI Panes**
-**Show/Hide the Tools & Color Panels** to maximize the drawing space.  
+- **Show/Hide the Tools & Color Panels** to maximize the drawing space.  
 
 ### 📏 **Change Canvas Size**
 - Resize the canvas **dynamically** while preserving existing drawings.  
